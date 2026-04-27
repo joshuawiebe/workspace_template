@@ -1,0 +1,56 @@
+name: Nightly Submodule Update
+
+# Run every night at 02:00 UTC
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository and submodules using SSH
+      - name: Checkout repository (SSH)
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-user: git
+          submodules: recursive
+          fetch-depth: 1
+          persist-credentials: false
+          clean: true
+          set-safe-directory: true
+
+      # Setup SSH for update script (needed since checkout doesn't persist credentials)
+      - name: Setup SSH for update script
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+      # Configure Git identity
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Run nightly update script
+      - name: Run update script
+        run: |
+          chmod +x .automations/update.sh
+          ./.automations/update.sh
+
+      # Generate summary output
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Nightly Update - $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "Update script executed" >> $GITHUB_STEP_SUMMARY
+          echo "Submodules are updated and committed/pushed by .automations/update.sh"

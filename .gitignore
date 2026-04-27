@@ -1,0 +1,82 @@
+# OS Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*~
+.directory
+.Trash-*
+
+# Editors
+.vscode/
+*.code-workspace
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*.swn
+.*.sw[a-z]
+\#*\#
+.\#*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+ENV/
+env/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+out/
+target/
+*.o
+*.so
+*.dylib
+*.exe
+*.dll
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+
+# Backup files - IMPORTANT: these must be ignored!
+*.bak
+*.backup
+*.old
+*.tmp
+.gitmodules.bak
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Test coverage
+coverage/
+.coverage
+.nyc_output/
