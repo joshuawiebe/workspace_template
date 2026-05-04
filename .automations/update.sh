@@ -322,30 +322,59 @@ echo ""
 # 8. Stage changes
 git add .gitmodules README.md . 2>/dev/null || true
 
-# 9. Detect updated submodule pointers
-changed=$(git status --porcelain | awk '$1 == "M" {print $2}')
-
-if [ -z "$changed" ]; then
-  success "=========================================="
-  success "  No changes to commit"
-  success "=========================================="
-  echo ""
-  exit 0
-fi
-
-# 10. Show which submodules were updated
+# 9. Check if there are actually submodule updates to commit
+# This is more reliable than checking git status for submodule changes
 if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
   info "Submodules with new commits:"
   cat "$UPDATED_REPOS" | sed 's/^/  ✓ /'
   echo ""
+  
+  # Stage all submodule changes
+  git add . 2>/dev/null || true
+  
+  # Build commit message from updated repos
+  group=$(cat "$UPDATED_REPOS" | tr '\n' ', ' | sed 's/, $//')
+  msg="chore: bump ${group} to latest upstream"
+  
+  # Only commit if there are staged changes
+  if git diff --cached --quiet; then
+    success "=========================================="
+    success "  Submodules updated but no pointer changes"
+    success "=========================================="
+    echo ""
+  else
+    # 10. Create commit and push
+    git commit -m "$msg"
+    git push origin main
+    
+    success "=========================================="
+    success "  Update Complete!"
+    success "=========================================="
+    echo ""
+  fi
+else
+  # Check for .gitmodules or README.md changes
+  changed=$(git status --porcelain | awk '$1 == "M" {print $2}')
+  
+  if [ -n "$changed" ]; then
+    group=$(echo "$changed" | tr '\n' ', ' | sed 's/, $//')
+    msg="chore: bump ${group} to latest upstream"
+    
+    git commit -m "$msg"
+    git push origin main
+    
+    success "=========================================="
+    success "  Update Complete!"
+    success "=========================================="
+    echo ""
+  else
+    success "=========================================="
+    success "  No changes to commit"
+    success "=========================================="
+    echo ""
+  fi
 fi
 
-# 11. Create commit and push
-group=$(echo "$changed" | tr '\n' ', ' | sed 's/, $//')
-msg="chore: bump ${group} to latest upstream"
-
-git commit -m "$msg"
-git push origin main
 
 success "=========================================="
 success "  Update Complete!"
