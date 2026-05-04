@@ -18,6 +18,7 @@ generate_readme_tree() {
     ["bootstrap.sh"]="clone-time submodule branch checkout"
     ["clean-gitmodules.sh"]="clean and sort .gitmodules"
     ["generate-tree.sh"]="shared tree generation logic"
+    ["install.sh"]="setup script for new workspaces"
     ["remove-submodule.sh"]="remove submodule completely"
     ["update.sh"]="update all submodules, commit & push"
     [".github/"]="hidden github automation scripts"
@@ -34,6 +35,7 @@ generate_readme_tree() {
   all_entries+=("│  ├─ bootstrap.sh")
   all_entries+=("│  ├─ clean-gitmodules.sh")
   all_entries+=("│  ├─ generate-tree.sh")
+  all_entries+=("│  ├─ install.sh")
   all_entries+=("│  ├─ remove-submodule.sh")
   all_entries+=("│  └─ update.sh")
   all_entries+=("├─ .github/")
@@ -107,6 +109,11 @@ generate_readme_tree() {
   local gen_spaces=$((comment_col - ${#gen_entry}))
   local gen_padding=$(printf "%*s" "$gen_spaces")
   echo "${gen_entry}${gen_padding}# ${entries[generate-tree.sh]}"
+  
+  local install_entry="│  ├─ install.sh"
+  local install_spaces=$((comment_col - ${#install_entry}))
+  local install_padding=$(printf "%*s" "$install_spaces")
+  echo "${install_entry}${install_padding}# ${entries[install.sh]}"
   
   local remove_entry="│  ├─ remove-submodule.sh"
   local remove_spaces=$((comment_col - ${#remove_entry}))

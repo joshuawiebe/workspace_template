@@ -9,17 +9,9 @@ workspace/
 │  ├─ bootstrap.sh             # clone-time submodule branch checkout
 │  ├─ clean-gitmodules.sh      # clean and sort .gitmodules
 │  ├─ generate-tree.sh         # shared tree generation logic
+│  ├─ install.sh               # setup script for new workspaces
 │  ├─ remove-submodule.sh      # remove submodule completely
 │  └─ update.sh                # update all submodules, commit & push
-├─ .github/                    # hidden github automation scripts
-│  └─ workflows/               # all workflows for github automations
-│     └─ nightly-update.yml    # automated nightly updates at 02:00 UTC
-├─ your-project-1/             # your submodule → git@github.com:user/project.git
-├─ your-project-2/             # your submodule → git@github.com:user/project.git
-├─ .gitignore                  # root ignores
-├─ .gitmodules                 # defines all submodules (ignore = all)
-├─ install.sh                  # setup script for new workspaces
-└─ README.md                   # this file
 ```
 
 ---
@@ -48,8 +40,8 @@ workspace/
    ```
 3. Run the setup script:
    ```bash
-   chmod +x install.sh
-   ./install.sh
+   chmod +x .automations/install.sh
+   ./.automations/install.sh
    ```
 
 ---
