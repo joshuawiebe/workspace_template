@@ -286,7 +286,7 @@ git push origin main
 * **Low Friction** – Seamless submodule management
 * **Developer-First** – Automation that respects your work, never loses your data
 * **Learning Sandbox** – Central hub for experiments and demos
-* **Automated Maintenance** – GitHub Actions handles routine updates
+* **Automated Maintenance** – GitHub Actions handles routine updates, local scripts stay flexible
 
 ---
 
