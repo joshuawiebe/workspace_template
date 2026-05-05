@@ -1,6 +1,8 @@
-# Workspace Template - Clone one, access everything!
+# Workspace <!-- TEMPLATE_START -->Template<!-- TEMPLATE_END --> - Clone one, access everything!
 
+<!-- TEMPLATE_START -->
 A GitHub template for creating a centralized Git super-repo that consolidates your projects using Git submodules. Each project is maintained as an independent submodule, preserving its own history and versioning while enabling a one-clone, multi-device workflow.
+<!-- TEMPLATE_END -->
 
 ```filetree
 workspace/
@@ -30,12 +32,13 @@ workspace/
 
 ## Getting Started
 
+<!-- TEMPLATE_START -->
 ### Use This Template
 
 1. Click **"Use this template"** on GitHub to create your own workspace
 2. Clone your new repository:
    ```bash
-   git clone --recursive <your-workspace-url>
+   <!-- CLONE_URL_START -->git clone --recursive <your-workspace-url><!-- CLONE_URL_END -->
    cd workspace
    ```
 3. Run the setup script:
@@ -43,6 +46,8 @@ workspace/
    chmod +x .automations/install.sh
    ./.automations/install.sh
    ```
+
+<!-- TEMPLATE_END -->
 
 ---
 

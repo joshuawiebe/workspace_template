@@ -246,9 +246,87 @@ update_readme_tree() {
   rm -f "$temp_tree"
 }
 
+# ==============================================================================
+# Dynamic README Update Functions
+# Only modify marked sections (between HTML comment delimiters)
+# ==============================================================================
+
+get_origin_url() {
+  git remote get-url origin 2>/dev/null || echo ""
+}
+
+is_template_repo() {
+  local origin_url=$(get_origin_url)
+  [[ "$origin_url" == *"workspace_template"* ]]
+}
+
+update_clone_url() {
+  local readme_file="${1:-README.md}"
+
+  if [[ ! -f "$readme_file" ]]; then
+    echo "README.md not found, skipping clone URL update."
+    return 0
+  fi
+
+  local origin_url=$(get_origin_url)
+  if [[ -z "$origin_url" ]]; then
+    echo "No origin URL found, skipping clone URL update."
+    return 0
+  fi
+
+  # Replace the clone URL between CLONE_URL markers (single-line case)
+  awk -v url="$origin_url" '
+  /<!-- CLONE_URL_START -->/ {
+    sub(/git clone --recursive [^<]*/, "git clone --recursive " url)
+  }
+  { print }
+  ' "$readme_file" > "$readme_file.tmp" && mv "$readme_file.tmp" "$readme_file"
+
+  echo "Clone URL updated to: $origin_url"
+}
+
+remove_template_content() {
+  local readme_file="${1:-README.md}"
+
+  if [[ ! -f "$readme_file" ]]; then
+    return 0
+  fi
+
+  # Check if this is a template repo
+  if is_template_repo; then
+    echo "Template repo detected, keeping template content."
+    return 0
+  fi
+
+  # Remove content between TEMPLATE_START and TEMPLATE_END markers (including markers)
+  awk '
+  BEGIN { in_template = 0 }
+  /<!-- TEMPLATE_START -->/ {
+    in_template = 1
+    next
+  }
+  /<!-- TEMPLATE_END -->/ {
+    in_template = 0
+    next
+  }
+  !in_template { print }
+  ' "$readme_file" > "$readme_file.tmp" && mv "$readme_file.tmp" "$readme_file"
+
+  echo "Template content removed."
+}
+
+generate_readme() {
+  # Get all submodule names and update the README
+  local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
+
+  update_readme_tree "$names"
+  update_clone_url
+  remove_template_content
+
+  echo "README generated successfully."
+}
+
 # Main execution when script is called directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  # Get all submodule names and update the README tree
-  names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
-  update_readme_tree "$names"
+  generate_readme
 fi
