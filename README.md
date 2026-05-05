@@ -189,6 +189,39 @@ GitHub Actions automatically runs every night at **02:00 UTC** to keep everythin
 
 ---
 
+## SSH Key Setup
+
+This workspace uses SSH URLs for Git operations. All automation scripts expect SSH format (`git@github.com:...`).
+
+### Generate SSH Key (if you don't have one)
+```bash
+ssh-keygen -t ed25519 -C "your-email@example.com"
+# Press Enter to accept default file location
+# Optionally enter a passphrase
+```
+
+### Add SSH Key to GitHub
+1. Copy your public key:
+   ```bash
+   cat ~/.ssh/id_ed25519.pub
+   ```
+2. Go to GitHub → Settings → SSH and GPG keys → New SSH key
+3. Paste your public key and save
+
+### Verify Setup
+```bash
+ssh -T git@github.com
+# Should return: "Hi username! You've successfully authenticated..."
+```
+
+### Convert Existing HTTPS Remotes to SSH (Optional)
+If your existing repos use HTTPS, convert them:
+```bash
+git remote set-url origin git@github.com:username/repo.git
+```
+
+---
+
 ## Automation Architecture
 
 ### Local Development Scripts (.automations/)
