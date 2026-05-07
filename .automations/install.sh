@@ -47,7 +47,7 @@ find .automations/ -maxdepth 1 -name '*.sh' -exec chmod +x {} + 2>/dev/null || t
 echo -e "${GREEN}✓ Scripts are now executable${NC}"
 
 # Initialize submodules if .gitmodules exists and has entries
-if [ -s "../.gitmodules" ]; then
+if [ -s ".gitmodules" ]; then
     echo -e "\n${YELLOW}Initializing submodules...${NC}"
     git submodule update --init --recursive
     

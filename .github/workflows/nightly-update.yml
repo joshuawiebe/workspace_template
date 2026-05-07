@@ -3,7 +3,7 @@ name: Nightly Submodule Update
 # Run every night at 02:00 UTC
 on:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 permissions:

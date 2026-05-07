@@ -53,11 +53,10 @@ fi
 
 # 1. Pull latest workspace changes
 info "Pulling latest workspace changes..."
-debug "Running: git pull origin main"
-if git pull origin main 2>&1 | grep -E "^(From|Already)" | sed 's/^/  /'; then
+if git pull origin main 2>&1; then
   success "Workspace up to date"
 else
-  success "Workspace synchronized"
+  warn "git pull failed — check your network or auth"
 fi
 echo ""
 
@@ -223,14 +222,14 @@ if [ -f "$UPDATE_RESULTS" ] && [ -s "$UPDATE_RESULTS" ]; then
       # Check if repo was actually updated
       after_sha=$(git rev-parse HEAD 2>/dev/null || echo "")
       if [ "$before_sha" != "$after_sha" ]; then
-        echo "$submodule"
+        echo "$submodule" >> "$UPDATED_REPOS"
       fi
       
       # Check for uncommitted changes after update
       if git status --porcelain | grep -q .; then
         warn "  $submodule: Has uncommitted changes (will not push)"
       fi
-    ) >> "$UPDATED_REPOS" 2>/dev/null || true
+    ) 2>/dev/null || true
   done < "$UPDATE_RESULTS"
 fi
 
@@ -314,8 +313,7 @@ echo ""
 
 # 7. Update README.md tree section
 info "Updating README.md tree..."
-chmod +x "$(dirname "$0")/generate-tree.sh"
-"$(dirname "$0")/generate-tree.sh" >/dev/null 2>&1
+generate_tree_only 2>/dev/null
 success "README.md tree updated"
 echo ""
 

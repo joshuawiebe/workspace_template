@@ -23,7 +23,7 @@ generate_readme_tree() {
     ["remove-submodule.sh"]="remove submodule completely"
     ["update.sh"]="update all submodules, commit & push"
     [".github/"]="hidden github automation scripts"
-    ["workflows/"]="all worklows for github automations"
+    ["workflows/"]="all workflows for github automations"
     ["nightly-update.yml"]="automated nightly updates at 02:00 UTC"
   )
   
