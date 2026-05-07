@@ -280,6 +280,7 @@ All scripts use bash with strict error handling (`set -euo pipefail`) for reliab
 * **remove-submodule.sh** – Complete submodule removal
 * **clean-gitmodules.sh** – Configuration cleanup and formatting
 * **generate-tree.sh** – Shared tree generation with ASCII sorting
+* **convert-to-ssh.sh** – Convert all HTTPS remotes to SSH
 
 ### GitHub Actions Workflow (.github/workflows/)
 
