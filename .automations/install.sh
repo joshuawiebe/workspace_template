@@ -52,8 +52,8 @@ if [ -s ".gitmodules" ]; then
     git submodule update --init --recursive
     
     # Run bootstrap if it exists
-    if [ -f ".automations/bootstrap.sh" ]; then
-        ./.automations/bootstrap.sh
+    if [ -f "bootstrap.sh" ]; then
+        ./bootstrap.sh
     fi
     echo -e "${GREEN}✓ Submodules initialized${NC}"
 fi
