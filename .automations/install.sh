@@ -118,8 +118,8 @@ echo "  4. Nightly updates run automatically at 02:00 UTC\n"
 
 echo -e "${BLUE}For more information, see README.md${NC}\n"
 
-# Generate README with dynamic content (only if template markers or email placeholder still exist)
+# Generate README with dynamic content (only if template markers, email, or origin placeholders still exist)
 user_email=$(git config user.email 2>/dev/null || echo "your-email@example.com")
-if grep -q '<!-- TEMPLATE_START -->' README.md 2>/dev/null || grep -q 'ssh-keygen -t ed25519 -C "your-email@example.com"' README.md 2>/dev/null; then
+if grep -q '<!-- TEMPLATE_START -->' README.md 2>/dev/null || grep -q 'ssh-keygen -t ed25519 -C "your-email@example.com"' README.md 2>/dev/null || grep -q 'git@github.com:username/repo.git' README.md 2>/dev/null; then
     bash "$(dirname "$0")/generate-tree.sh" --customize "$user_email"
 fi

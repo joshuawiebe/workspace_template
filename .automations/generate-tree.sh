@@ -327,6 +327,37 @@ update_email() {
   echo "SSH instruction email updated to: $email"
 }
 
+update_origin_placeholders() {
+  local readme_file="${1:-README.md}"
+
+  if [[ ! -f "$readme_file" ]]; then
+    return 0
+  fi
+
+  local origin_url=$(get_origin_url)
+  if [[ -z "$origin_url" ]]; then
+    return 0
+  fi
+
+  local user_repo=""
+  if [[ "$origin_url" =~ github\.com[:/](.+)\.git$ ]]; then
+    user_repo="${BASH_REMATCH[1]}"
+  elif [[ "$origin_url" =~ github\.com[:/](.+)$ ]]; then
+    user_repo="${BASH_REMATCH[1]}"
+  fi
+
+  if [[ -z "$user_repo" ]]; then
+    echo "Could not extract user/repo from origin URL."
+    return 0
+  fi
+
+  # Replace generic "username/repo" placeholders with actual origin user/repo
+  sed -i "s|git@github.com:username/repo.git|git@github.com:${user_repo}.git|g" "$readme_file"
+  sed -i "s|https://github.com/username/repo.git|https://github.com/${user_repo}.git|g" "$readme_file"
+
+  echo "Origin placeholders updated to: $user_repo"
+}
+
 customize_readme() {
   local user_email="${1:-your-email@example.com}"
   local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
@@ -335,6 +366,7 @@ customize_readme() {
   update_clone_url
   remove_template_content
   update_email "$user_email"
+  update_origin_placeholders
 
   echo "README customized successfully."
 }
