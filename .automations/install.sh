@@ -43,7 +43,7 @@ fi
 
 # Make scripts executable
 echo -e "\n${YELLOW}Setting up automation scripts...${NC}"
-chmod +x *.sh
+find .automations/ -maxdepth 1 -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
 echo -e "${GREEN}✓ Scripts are now executable${NC}"
 
 # Initialize submodules if .gitmodules exists and has entries
@@ -119,7 +119,7 @@ echo "  4. Nightly updates run automatically at 02:00 UTC\n"
 echo -e "${BLUE}For more information, see README.md${NC}\n"
 
 # Generate README with dynamic content (only if template markers still exist)
-if [ -f "$(dirname "$0")/generate-tree.sh" ] && grep -q '<!-- TEMPLATE_START -->' README.md 2>/dev/null; then
-    source "$(dirname "$0")/generate-tree.sh"
-    generate_readme
+user_email=$(git config user.email 2>/dev/null || echo "your-email@example.com")
+if grep -q '<!-- TEMPLATE_START -->' README.md 2>/dev/null; then
+    bash "$(dirname "$0")/generate-tree.sh" --customize "$user_email"
 fi

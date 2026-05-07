@@ -4,30 +4,6 @@
 A GitHub template for creating a centralized Git super-repo that consolidates your projects using Git submodules. Each project is maintained as an independent submodule, preserving its own history and versioning while enabling a one-clone, multi-device workflow.
 <!-- TEMPLATE_END -->
 
-```filetree
-workspace/
-├─ .automations/               # automation scripts
-│  ├─ add-submodule.sh         # add new submodule (auto-sorts everything)
-│  ├─ bootstrap.sh             # clone-time submodule branch checkout
-│  ├─ clean-gitmodules.sh      # clean and sort .gitmodules
-│  ├─ generate-tree.sh         # shared tree generation logic
-│  ├─ install.sh               # setup script for new workspaces
-│  ├─ remove-submodule.sh      # remove submodule completely
-│  └─ update.sh                # update all submodules, commit & push
-```
-
----
-
-## Why This Structure?
-
-* **Single-Clone Onboarding** – Clone once, get everything; no more juggling dozens of repos
-* **Independent Versioning** – Submodules maintain separate commit histories and release cycles
-* **Zero Noise** – `ignore = all` silences pointer drift until you intentionally update
-* **Multi-Device Consistency** – Same codebase on any laptop, desktop, or CI agent
-* **Modular Experimentation** – Add or remove projects without polluting the super-repo history
-* **Developer-Safe** – Local changes are never lost during automation runs
-* **Automated Updates** – GitHub Actions keeps everything synchronized with zero manual effort
-
 ---
 
 ## Getting Started
@@ -48,144 +24,6 @@ workspace/
    ```
 
 <!-- TEMPLATE_END -->
-
----
-
-## Daily Workflow
-
-### Update All Submodules
-
-```bash
-chmod +x .automations/update.sh
-.automations/update.sh
-```
-
-This script intelligently handles updates based on where it runs:
-
-**Local Development (Your Computer):**
-* Detects your current branch and uncommitted changes in each submodule
-* Temporarily switches to configured default branch (main) for updates
-* Fetches and pulls latest changes from remote
-* **Automatically restores your original branch and stashed changes** after update
-* Your work is 100% preserved - no data loss, no surprises
-
-**GitHub Actions (CI/CD):**
-* Runs fast on default branch for clean automation
-* Fetches, pulls, and pushes all submodule updates
-* Creates descriptive commit and pushes workspace changes
-* No state preservation overhead needed in automation environment
-
-**Key Benefits:**
-* Safe for multi-branch local development (e.g., working on feature branches)
-* No risk of losing uncommitted work
-* Automatic stash/restore for seamless integration
-* Only workspace pointer changes are pushed - your submodule work stays local until you explicitly commit
-
-**Example Scenario:**
-```
-BEFORE UPDATE:
-  project-a/      → on branch "feature-config" with 3 uncommitted files
-  project-b/      → on main (clean)
-
-RUN: .automations/update.sh
-
-AFTER UPDATE:
-  project-a/      → restored to "feature-config" with 3 files unstaged again ✓
-  project-b/      → updated to latest on main
-  
-Your work is intact!
-```
-
----
-
-## Adding a New Submodule
-
-```bash
-chmod +x .automations/add-submodule.sh
-.automations/add-submodule.sh
-```
-
-The script will:
-
-1. Prompt for the SSH URL
-2. Add submodule with `ignore = all` configuration
-3. Sort `.gitmodules` alphabetically
-4. Optionally commit and push changes
-
-**Manual method:**
-
-```bash
-git submodule add --branch main <repo-url> <folder>
-git config -f .gitmodules submodule.<folder>.ignore all
-git add .gitmodules <folder>
-git commit -m "chore: add <folder> submodule"
-git push origin main
-```
-
----
-
-## Cleaning .gitmodules
-
-```bash
-chmod +x .automations/clean-gitmodules.sh
-.automations/clean-gitmodules.sh
-```
-
-Rebuilds `.gitmodules` with:
-
-* Alphabetical sorting
-* Consistent formatting (tabs, spacing)
-* All required fields (path, url, branch, ignore)
-
----
-
-## Removing a Submodule
-
-```bash
-chmod +x .automations/remove-submodule.sh
-.automations/remove-submodule.sh
-```
-
-Or manually:
-
-```bash
-# Deinitialize submodule
-git submodule deinit -f <folder>
-
-# Remove from repository
-git rm <folder>
-
-# Remove metadata
-rm -rf .git/modules/<folder>
-
-# Edit .gitmodules manually to remove entry
-
-# Commit & push
-git commit -m "chore: remove <folder> submodule"
-git push origin main
-```
-
----
-
-## Automated Nightly Updates
-
-GitHub Actions automatically runs every night at **02:00 UTC** to keep everything synchronized:
-
-* Updates all submodules to latest upstream commits
-* Detects and fixes orphaned submodule commits (safeguard against data corruption)
-* Commits changes with descriptive message (e.g., "chore: bump project-a, project-b to latest upstream")
-* Pushes to main branch
-* Generates summary in Actions workflow output
-
-**No manual intervention needed** – your repositories stay in sync automatically.
-
-**Setup required:** 
-1. Push your workspace to GitHub
-2. Go to Settings → Secrets and variables → Actions
-3. Add `SSH_PRIVATE_KEY` secret with your GitHub SSH private key
-4. Workflow will run automatically
-
-**Manual trigger:** Go to Actions → Nightly Submodule Update → Run workflow
 
 ---
 
@@ -262,6 +100,174 @@ The GH CLI automatically uses the remote URL format you have configured (SSH or 
 
 ---
 
+## File Tree
+
+```filetree
+workspace/
+├─ .automations/               # automation scripts
+│  ├─ add-submodule.sh         # add new submodule (auto-sorts everything)
+│  ├─ bootstrap.sh             # clone-time submodule branch checkout
+│  ├─ clean-gitmodules.sh      # clean and sort .gitmodules
+│  ├─ generate-tree.sh         # shared tree generation logic
+│  ├─ install.sh               # setup script for new workspaces
+│  ├─ remove-submodule.sh      # remove submodule completely
+│  └─ update.sh                # update all submodules, commit & push
+```
+
+---
+
+## Why This Structure?
+
+* **Single-Clone Onboarding** – Clone once, get everything; no more juggling dozens of repos
+* **Independent Versioning** – Submodules maintain separate commit histories and release cycles
+* **Zero Noise** – `ignore = all` silences pointer drift until you intentionally update
+* **Multi-Device Consistency** – Same codebase on any laptop, desktop, or CI agent
+* **Modular Experimentation** – Add or remove projects without polluting the super-repo history
+* **Developer-Safe** – Local changes are never lost during automation runs
+* **Automated Updates** – GitHub Actions keeps everything synchronized with zero manual effort
+
+---
+
+## Daily Workflow
+
+### Update All Submodules
+
+```bash
+chmod +x .automations/update.sh
+.automations/update.sh
+```
+
+This script intelligently handles updates based on where it runs:
+
+**Local Development (Your Computer):**
+* Detects your current branch and uncommitted changes in each submodule
+* Temporarily switches to configured default branch (main) for updates
+* Fetches and pulls latest changes from remote
+* **Automatically restores your original branch and stashed changes** after update
+* Your work is 100% preserved - no data loss, no surprises
+
+**GitHub Actions (CI/CD):**
+* Runs fast on default branch for clean automation
+* Fetches, pulls, and pushes all submodule updates
+* Creates descriptive commit and pushes workspace changes
+* No state preservation overhead needed in automation environment
+
+**Key Benefits:**
+* Safe for multi-branch local development (e.g., working on feature branches)
+* No risk of losing uncommitted work
+* Automatic stash/restore for seamless integration
+* Only workspace pointer changes are pushed - your submodule work stays local until you explicitly commit
+
+**Example Scenario:**
+```
+BEFORE UPDATE:
+  project-a/      → on branch "feature-config" with 3 uncommitted files
+  project-b/      → on main (clean)
+
+RUN: .automations/update.sh
+
+AFTER UPDATE:
+  project-a/      → restored to "feature-config" with 3 files unstaged again ✓
+  project-b/      → updated to latest on main
+  
+Your work is intact!
+```
+
+---
+
+## Managing Submodules
+
+### Adding a New Submodule
+
+```bash
+chmod +x .automations/add-submodule.sh
+.automations/add-submodule.sh
+```
+
+The script will:
+
+1. Prompt for the SSH URL
+2. Add submodule with `ignore = all` configuration
+3. Sort `.gitmodules` alphabetically
+4. Optionally commit and push changes
+
+**Manual method:**
+
+```bash
+git submodule add --branch main <repo-url> <folder>
+git config -f .gitmodules submodule.<folder>.ignore all
+git add .gitmodules <folder>
+git commit -m "chore: add <folder> submodule"
+git push origin main
+```
+
+---
+
+### Cleaning .gitmodules
+
+```bash
+chmod +x .automations/clean-gitmodules.sh
+.automations/clean-gitmodules.sh
+```
+
+Rebuilds `.gitmodules` with:
+
+* Alphabetical sorting
+* Consistent formatting (tabs, spacing)
+* All required fields (path, url, branch, ignore)
+
+---
+
+### Removing a Submodule
+
+```bash
+chmod +x .automations/remove-submodule.sh
+.automations/remove-submodule.sh
+```
+
+Or manually:
+
+```bash
+# Deinitialize submodule
+git submodule deinit -f <folder>
+
+# Remove from repository
+git rm <folder>
+
+# Remove metadata
+rm -rf .git/modules/<folder>
+
+# Edit .gitmodules manually to remove entry
+
+# Commit & push
+git commit -m "chore: remove <folder> submodule"
+git push origin main
+```
+
+---
+
+## Automated Nightly Updates
+
+GitHub Actions automatically runs every night at **02:00 UTC** to keep everything synchronized:
+
+* Updates all submodules to latest upstream commits
+* Detects and fixes orphaned submodule commits (safeguard against data corruption)
+* Commits changes with descriptive message (e.g., "chore: bump project-a, project-b to latest upstream")
+* Pushes to main branch
+* Generates summary in Actions workflow output
+
+**No manual intervention needed** – your repositories stay in sync automatically.
+
+**Setup required:** 
+1. Push your workspace to GitHub
+2. Go to Settings → Secrets and variables → Actions
+3. Add `SSH_PRIVATE_KEY` secret with your GitHub SSH private key
+4. Workflow will run automatically
+
+**Manual trigger:** Go to Actions → Nightly Submodule Update → Run workflow
+
+---
+
 ## Automation Architecture
 
 ### Local Development Scripts (.automations/)
@@ -285,19 +291,9 @@ All scripts use bash with strict error handling (`set -euo pipefail`) for reliab
 
 ---
 
-## Optional Configuration
+## Troubleshooting & Useful Commands
 
-```bash
-# Suppress submodule status in git status
-git config status.submoduleSummary false
-
-# Ignore all submodule diffs
-git config diff.ignoreSubmodules all
-```
-
----
-
-## Useful Commands
+### Useful Commands
 
 ```bash
 # Check status of all submodules
@@ -313,9 +309,7 @@ git submodule update --remote <folder>
 git config --file .gitmodules --list
 ```
 
----
-
-## Troubleshooting
+### Troubleshooting
 
 **Submodule not updating?**
 
@@ -354,6 +348,18 @@ git push origin main
 * Ensure SSH key has access to all submodule repositories
 * Review Actions logs for specific error messages
 * Check that all submodule URLs use SSH format (`git@github.com:...`)
+
+---
+
+## Optional Configuration
+
+```bash
+# Suppress submodule status in git status
+git config status.submoduleSummary false
+
+# Ignore all submodule diffs
+git config diff.ignoreSubmodules all
+```
 
 ---
 

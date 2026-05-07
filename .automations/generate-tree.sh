@@ -315,18 +315,41 @@ remove_template_content() {
   echo "Template content removed."
 }
 
-generate_readme() {
-  # Get all submodule names and update the README
+update_email() {
+  local email="${1:-your-email@example.com}"
+  local readme_file="${2:-README.md}"
+
+  if [[ ! -f "$readme_file" ]]; then
+    return 0
+  fi
+
+  sed -i "s/ssh-keygen -t ed25519 -C \"your-email@example.com\"/ssh-keygen -t ed25519 -C \"$email\"/" "$readme_file"
+  echo "SSH instruction email updated to: $email"
+}
+
+customize_readme() {
+  local user_email="${1:-your-email@example.com}"
   local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
 
   update_readme_tree "$names"
   update_clone_url
   remove_template_content
+  update_email "$user_email"
 
-  echo "README generated successfully."
+  echo "README customized successfully."
+}
+
+generate_tree_only() {
+  local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
+  update_readme_tree "$names"
+  echo "README tree updated."
 }
 
 # Main execution when script is called directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  generate_readme
+  if [[ "${1:-}" == "--customize" ]]; then
+    customize_readme "${2:-your-email@example.com}"
+  else
+    generate_tree_only
+  fi
 fi
