@@ -320,7 +320,7 @@ echo ""
 # 8. Stage changes
 git add .gitmodules README.md . 2>/dev/null || true
 
-# 9. Commit submodule pointer changes (README tree regeneration alone is not a bump)
+# 9. Commit submodule pointer changes or docs/other file updates
 if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
   info "Submodules with new commits:"
   cat "$UPDATED_REPOS" | sed 's/^/  • /'
@@ -351,8 +351,27 @@ if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
     echo ""
   fi
 else
-  success "=========================================="
-  success "  No changes to commit"
-  success "=========================================="
-  echo ""
+  # Check for other file changes (README tree, .gitmodules, etc.)
+  changed=$(git status --porcelain | awk '$1 == "M" {print $2}')
+  
+  if [ -n "$changed" ]; then
+    if [ "$changed" = "README.md" ]; then
+      msg="docs: update file tree in README"
+    else
+      msg="chore: update $(echo "$changed" | tr '\n' ', ' | sed 's/, $//')"
+    fi
+    
+    git commit -m "$msg"
+    git push origin main
+    
+    success "=========================================="
+    success "  Update Complete!"
+    success "=========================================="
+    echo ""
+  else
+    success "=========================================="
+    success "  No changes to commit"
+    success "=========================================="
+    echo ""
+  fi
 fi
