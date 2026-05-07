@@ -339,7 +339,7 @@ if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
   # Only commit if there are staged changes
   if git diff --cached --quiet; then
     success "=========================================="
-    success "  Submodules updated but no pointer changes"
+    success "  No pointer change to push"
     success "=========================================="
     echo ""
   else
