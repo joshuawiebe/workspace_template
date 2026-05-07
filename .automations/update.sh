@@ -320,8 +320,7 @@ echo ""
 # 8. Stage changes
 git add .gitmodules README.md . 2>/dev/null || true
 
-# 9. Check if there are actually submodule updates to commit
-# This is more reliable than checking git status for submodule changes
+# 9. Commit submodule pointer changes (README tree regeneration alone is not a bump)
 if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
   info "Submodules with new commits:"
   cat "$UPDATED_REPOS" | sed 's/^/  • /'
@@ -343,7 +342,6 @@ if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
     success "=========================================="
     echo ""
   else
-    # 10. Create commit and push
     git commit -m "$msg"
     git push origin main
     
@@ -353,30 +351,8 @@ if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
     echo ""
   fi
 else
-  # Check for .gitmodules or README.md changes
-  changed=$(git status --porcelain | awk '$1 == "M" {print $2}')
-  
-  if [ -n "$changed" ]; then
-    group=$(echo "$changed" | tr '\n' ', ' | sed 's/, $//')
-    msg="chore: bump ${group} to latest upstream"
-    
-    git commit -m "$msg"
-    git push origin main
-    
-    success "=========================================="
-    success "  Update Complete!"
-    success "=========================================="
-    echo ""
-  else
-    success "=========================================="
-    success "  No changes to commit"
-    success "=========================================="
-    echo ""
-  fi
+  success "=========================================="
+  success "  No changes to commit"
+  success "=========================================="
+  echo ""
 fi
-
-
-success "=========================================="
-success "  Update Complete!"
-success "=========================================="
-echo ""
