@@ -118,8 +118,8 @@ echo "  4. Nightly updates run automatically at 02:00 UTC\n"
 
 echo -e "${BLUE}For more information, see README.md${NC}\n"
 
-# Generate README with dynamic content (updates tree, clone URL, removes template content if needed)
-if [ -f "$(dirname "$0")/generate-tree.sh" ]; then
+# Generate README with dynamic content (only if template markers still exist)
+if [ -f "$(dirname "$0")/generate-tree.sh" ] && grep -q '<!-- TEMPLATE_START -->' README.md 2>/dev/null; then
     source "$(dirname "$0")/generate-tree.sh"
     generate_readme
 fi

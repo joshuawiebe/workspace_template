@@ -220,6 +220,46 @@ If your existing repos use HTTPS, convert them:
 git remote set-url origin git@github.com:username/repo.git
 ```
 
+### GitHub CLI & HTTPS Support
+
+The GitHub CLI (`gh`) works fine over HTTPS. If you prefer HTTPS you can clone, add, or update submodules with URLs such as `https://github.com/username/repo.git`.
+
+| Protocol | URL Format |
+|----------|-----------|
+| SSH | `git@github.com:username/repo.git` |
+| HTTPS | `https://github.com/username/repo.git` |
+
+All automation scripts (`add-submodule.sh`, `update.sh`) expect SSH format. The workflows still function properly when the repository is cloned via HTTPS — the only extra step is switching the remote URLs to SSH.
+
+#### Quick Script — Convert All Remotes to SSH
+
+```bash
+chmod +x .automations/convert-to-ssh.sh
+./.automations/convert-to-ssh.sh
+```
+
+This converts the main repo and all submodule remotes from HTTPS to SSH in one go. It's safe to rerun at any time.
+
+#### Manual Conversion (Submodules)
+
+```bash
+git submodule foreach '
+  url=$(git remote get-url origin)
+  if [[ $url == https://* ]]; then
+    sshurl=${url/https:\/\/github.com\//git@github.com:}
+    git remote set-url origin "$sshurl"
+  fi
+'
+```
+
+#### GH CLI Usage Tip
+
+```bash
+gh repo view --web   # opens the repository in the browser
+```
+
+The GH CLI automatically uses the remote URL format you have configured (SSH or HTTPS).
+
 ---
 
 ## Automation Architecture
