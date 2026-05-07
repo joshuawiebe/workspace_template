@@ -351,14 +351,15 @@ if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
     echo ""
   fi
 else
-  # Check for other file changes (README tree, .gitmodules, etc.)
+  # Only commit README.md and .gitmodules changes (automation scripts need manual commits)
   changed=$(git status --porcelain | awk '$1 == "M" {print $2}')
+  relevant=$(echo "$changed" | grep -xE '(README\.md|\.gitmodules)' || true)
   
-  if [ -n "$changed" ]; then
-    if [ "$changed" = "README.md" ]; then
+  if [ -n "$relevant" ]; then
+    if [ "$relevant" = "README.md" ]; then
       msg="docs: update file tree in README"
     else
-      msg="chore: update $(echo "$changed" | tr '\n' ', ' | sed 's/, $//')"
+      msg="chore: update $(echo "$relevant" | tr '\n' ', ' | sed 's/, $//')"
     fi
     
     git commit -m "$msg"
