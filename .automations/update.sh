@@ -326,11 +326,13 @@ git add .gitmodules README.md . 2>/dev/null || true
 # This is more reliable than checking git status for submodule changes
 if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
   info "Submodules with new commits:"
-  cat "$UPDATED_REPOS" | sed 's/^/  ✓ /'
+  cat "$UPDATED_REPOS" | sed 's/^/  • /'
   echo ""
   
-  # Stage all submodule changes
-  git add . 2>/dev/null || true
+  # Stage all submodule changes (--force overrides ignore = all)
+  while IFS= read -r repo; do
+    git add --force "$repo"
+  done < "$UPDATED_REPOS"
   
   # Build commit message from updated repos
   group=$(cat "$UPDATED_REPOS" | tr '\n' ', ' | sed 's/, $//')
