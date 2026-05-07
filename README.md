@@ -108,6 +108,7 @@ workspace/
 │  ├─ add-submodule.sh         # add new submodule (auto-sorts everything)
 │  ├─ bootstrap.sh             # clone-time submodule branch checkout
 │  ├─ clean-gitmodules.sh      # clean and sort .gitmodules
+│  ├─ convert-to-ssh.sh        # convert HTTPS remotes to SSH
 │  ├─ generate-tree.sh         # shared tree generation logic
 │  ├─ install.sh               # setup script for new workspaces
 │  ├─ remove-submodule.sh      # remove submodule completely

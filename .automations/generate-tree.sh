@@ -17,6 +17,7 @@ generate_readme_tree() {
     ["add-submodule.sh"]="add new submodule (auto-sorts everything)"
     ["bootstrap.sh"]="clone-time submodule branch checkout"
     ["clean-gitmodules.sh"]="clean and sort .gitmodules"
+    ["convert-to-ssh.sh"]="convert HTTPS remotes to SSH"
     ["generate-tree.sh"]="shared tree generation logic"
     ["install.sh"]="setup script for new workspaces"
     ["remove-submodule.sh"]="remove submodule completely"
@@ -34,6 +35,7 @@ generate_readme_tree() {
   all_entries+=("│  ├─ add-submodule.sh")
   all_entries+=("│  ├─ bootstrap.sh")
   all_entries+=("│  ├─ clean-gitmodules.sh")
+  all_entries+=("│  ├─ convert-to-ssh.sh")
   all_entries+=("│  ├─ generate-tree.sh")
   all_entries+=("│  ├─ install.sh")
   all_entries+=("│  ├─ remove-submodule.sh")
@@ -72,18 +74,6 @@ generate_readme_tree() {
   # Add 2 spaces padding before comment
   local comment_col=$((max_len + 2))
   
-  # Find the longest entry to determine comment alignment
-  local max_len=0
-  for entry in "${all_entries[@]}"; do
-    local entry_len=${#entry}
-    if [[ $entry_len -gt $max_len ]]; then
-      max_len=$entry_len
-    fi
-  done
-  
-  # Add 2 spaces padding before comment
-  local comment_col=$((max_len + 2))
-  
   # Print automation section with dynamic alignment
   local auto_entry="├─ .automations/"
   local auto_spaces=$((comment_col - ${#auto_entry}))
@@ -105,6 +95,11 @@ generate_readme_tree() {
   local clean_padding=$(printf "%*s" "$clean_spaces")
   echo "${clean_entry}${clean_padding}# ${entries[clean-gitmodules.sh]}"
   
+  local convert_entry="│  ├─ convert-to-ssh.sh"
+  local convert_spaces=$((comment_col - ${#convert_entry}))
+  local convert_padding=$(printf "%*s" "$convert_spaces")
+  echo "${convert_entry}${convert_padding}# ${entries[convert-to-ssh.sh]}"
+
   local gen_entry="│  ├─ generate-tree.sh"
   local gen_spaces=$((comment_col - ${#gen_entry}))
   local gen_padding=$(printf "%*s" "$gen_spaces")
