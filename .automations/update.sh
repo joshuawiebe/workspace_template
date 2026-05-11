@@ -9,7 +9,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 # Color helpers
 info() { echo -e "\033[0;34m[INFO]\033[0m $1"; }
-warn() { echo -e "\033[0;33m[WARN]\033[0m $1"; }
+warn() { echo -e "\033[0;33m[WARN]\033[0m $1" >&2; }
 success() { echo -e "\033[0;32m[SUCCESS]\033[0m $1"; }
 debug() { echo -e "\033[0;36m[DEBUG]\033[0m $1"; }
 
@@ -65,48 +65,33 @@ info "Checking for orphaned submodule commits..."
 
 # Create temp file for tracking orphaned detection results
 ORPHAN_RESULTS=$(mktemp)
-
 ORPHANED_COUNT=0
 CHECKED_COUNT=0
 
-while IFS= read -r submodule_path; do
-  [ -z "$submodule_path" ] && continue
-  
-  CHECKED_COUNT=$((CHECKED_COUNT + 1))
-  
-  if [ ! -d "$submodule_path" ]; then
-    continue
-  fi
-  
-  (
-    cd "$submodule_path" || exit 1
-    
-    # Get configured branch from root .gitmodules
-    branch=$(git config -f "$REPO_ROOT/.gitmodules" --get "submodule.$submodule_path.branch" 2>/dev/null || echo "main")
-    current_ref=$(git rev-parse HEAD 2>/dev/null || echo "")
-    
-    if [ -z "$current_ref" ]; then
-      exit 0
-    fi
-    
-    if ! git cat-file -t "$current_ref" >/dev/null 2>&1; then
-      echo "ORPHANED:$submodule_path:$branch"
-    fi
-  ) >> "$ORPHAN_RESULTS" 2>/dev/null || true
-done < <(git config -f "$REPO_ROOT/.gitmodules" --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+# Use recursive foreach to examine every submodule (including nested ones)
 
-# Process orphan detection results
+git submodule foreach --quiet --recursive '
+  # Determine branch (fallback to main if not set in root .gitmodules)
+  branch=$(git config -f "$toplevel/.gitmodules" submodule.$name.branch 2>/dev/null || echo "main")
+  current_ref=$(git rev-parse HEAD 2>/dev/null || echo "")
+  if [ -z "$current_ref" ]; then
+    exit 0
+  fi
+  if ! git cat-file -t "$current_ref" >/dev/null 2>&1; then
+    echo "ORPHANED:$name:$branch"
+  fi
+' >> "$ORPHAN_RESULTS"
+
+CHECKED_COUNT=$(git submodule status --recursive | wc -l | tr -d ' ')
 while IFS=':' read -r status submodule branch; do
   case "$status" in
     ORPHANED)
       warn "  Found orphaned commit in: $submodule (resetting to origin/$branch)"
-      
       (
         cd "$submodule" || exit 1
         git fetch origin "$branch" >/dev/null 2>&1 || true
         git reset --hard "origin/$branch" >/dev/null 2>&1 || true
       )
-      
       ORPHANED_COUNT=$((ORPHANED_COUNT + 1))
       ;;
   esac
@@ -117,6 +102,7 @@ if [ "$ORPHANED_COUNT" -gt 0 ]; then
 else
   success "All $CHECKED_COUNT submodules valid"
 fi
+
 echo ""
 
 # 3. LOCAL MODE: Check and save state for submodules with local changes
@@ -125,12 +111,12 @@ if [ "$IS_GITHUB_ACTIONS" != "true" ]; then
   
   CHANGED_COUNT=0
   
-  git submodule foreach --quiet '
-    has_changes=$(git status --porcelain | grep -v "^??" | wc -l)
-    if [ "$has_changes" -gt 0 ]; then
-      echo "$name:$has_changes"
-    fi
-  ' >> "$CHANGE_RESULTS" 2>/dev/null || true
+git submodule foreach --quiet --recursive '
+  has_changes=$(git status --porcelain | grep -v "^??" | wc -l)
+  if [ "$has_changes" -gt 0 ]; then
+    echo "$name:$has_changes"
+  fi
+' >> "$CHANGE_RESULTS" 2>/dev/null || true
   
   if [ -f "$CHANGE_RESULTS" ] && [ -s "$CHANGE_RESULTS" ]; then
     while IFS=':' read -r submodule change_count; do
@@ -175,11 +161,11 @@ UPDATED_REPOS=$(mktemp)
 
 UPDATE_COUNT=0
 
-git submodule foreach --quiet '
+git submodule foreach --quiet --recursive '
   branch=$(git config -f "$toplevel/.gitmodules" submodule.$name.branch 2>/dev/null || echo "main")
   current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "detached")
   echo "PROCESS:$name:$branch:$current_branch"
-' >> "$UPDATE_RESULTS" 2>/dev/null || true
+' >> "$UPDATE_RESULTS" || true
 
 if [ -f "$UPDATE_RESULTS" ] && [ -s "$UPDATE_RESULTS" ]; then
   while IFS=':' read -r marker submodule branch current_branch; do
@@ -211,7 +197,16 @@ if [ -f "$UPDATE_RESULTS" ] && [ -s "$UPDATE_RESULTS" ]; then
           git checkout "$branch" >/dev/null 2>&1 || true
           git fetch origin "$branch" >/dev/null 2>&1 || true
           git pull origin "$branch" >/dev/null 2>&1 || true
-          git checkout "$current_branch" >/dev/null 2>&1 || true
+          # Check if old branch still exists upstream
+          if git fetch origin "$current_branch" >/dev/null 2>&1; then
+            git checkout "$current_branch" >/dev/null 2>&1 || true
+          else
+            # Branch was deleted upstream — stay on default and drop stash if present
+            if grep -q "^${submodule}:" "$STASH_FILE" 2>/dev/null; then
+              git stash drop >/dev/null 2>&1 || true
+              sed -i "\|^${submodule}:|d" "$STASH_FILE" 2>/dev/null || true
+            fi
+          fi
         else
           # Already on default branch
           git fetch origin "$branch" >/dev/null 2>&1 || true
@@ -229,7 +224,7 @@ if [ -f "$UPDATE_RESULTS" ] && [ -s "$UPDATE_RESULTS" ]; then
       if git status --porcelain | grep -q .; then
         warn "  $submodule: Has uncommitted changes (will not push)"
       fi
-    ) 2>/dev/null || true
+    ) || true
   done < "$UPDATE_RESULTS"
 fi
 
