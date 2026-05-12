@@ -41,6 +41,7 @@ cleanup_trap() {
   [ -n "$ORPHAN_RESULTS" ] && [ -f "$ORPHAN_RESULTS" ] && rm -f "$ORPHAN_RESULTS"
   [ -n "$UPDATE_RESULTS" ] && [ -f "$UPDATE_RESULTS" ] && rm -f "$UPDATE_RESULTS"
   [ -n "$UPDATED_REPOS" ] && [ -f "$UPDATED_REPOS" ] && rm -f "$UPDATED_REPOS"
+  [ -n "$UNCOMMITTED_FILE" ] && [ -f "$UNCOMMITTED_FILE" ] && rm -f "$UNCOMMITTED_FILE"
 }
 trap cleanup_trap EXIT
 
@@ -160,6 +161,7 @@ UPDATE_RESULTS=$(mktemp)
 UPDATED_REPOS=$(mktemp)
 
 UPDATE_COUNT=0
+UNCOMMITTED_FILE=$(mktemp)
 
 git submodule foreach --quiet --recursive '
   branch=$(git config -f "$toplevel/.gitmodules" submodule.$name.branch 2>/dev/null || echo "main")
@@ -223,7 +225,7 @@ if [ -f "$UPDATE_RESULTS" ] && [ -s "$UPDATE_RESULTS" ]; then
       
       # Check for uncommitted changes after update
       if git status --porcelain | grep -q .; then
-        warn "  $submodule: Has uncommitted changes (will not push)"
+        echo "$submodule" >> "$UNCOMMITTED_FILE"
       fi
     ) || true
   done < "$UPDATE_RESULTS"
@@ -235,6 +237,11 @@ if [ "$ACTUALLY_UPDATED" -gt 0 ]; then
   success "Updated $ACTUALLY_UPDATED submodule(s) with new commits"
 else
   success "All submodules already up to date"
+fi
+if [ -f "$UNCOMMITTED_FILE" ] && [ -s "$UNCOMMITTED_FILE" ]; then
+  while IFS= read -r submodule; do
+    warn "  $submodule: has uncommitted changes (will not push)"
+  done < "$UNCOMMITTED_FILE"
 fi
 echo ""
 
@@ -310,7 +317,7 @@ echo ""
 # 7. Update README.md tree section
 info "Updating README.md tree..."
 generate_tree_only 2>/dev/null
-success "README.md tree updated"
+info "README.md tree updated"
 echo ""
 
 # 8. Stage changes
