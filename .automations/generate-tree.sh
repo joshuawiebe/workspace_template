@@ -369,7 +369,6 @@ customize_readme() {
 generate_tree_only() {
   local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
   update_readme_tree "$names"
-  echo "README tree updated."
 }
 
 # Main execution when script is called directly

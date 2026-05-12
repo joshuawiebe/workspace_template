@@ -113,7 +113,7 @@ if [ "$IS_GITHUB_ACTIONS" != "true" ]; then
   CHANGED_COUNT=0
   
   git submodule foreach --quiet --recursive '
-    has_changes=$(git status --porcelain | grep -v "^??" | wc -l)
+    has_changes=$(git status --porcelain | wc -l)
     if [ "$has_changes" -gt 0 ]; then
       echo "$name:$has_changes"
     fi
@@ -139,8 +139,8 @@ if [ "$IS_GITHUB_ACTIONS" != "true" ]; then
       # Only show details for modules with changes
       warn "  $submodule: Found $change_count file(s) with changes"
       
-      # Stash the changes
-      (cd "$submodule" && git stash push -m "workspace-update-backup-$submodule" >/dev/null 2>&1 || true)
+      # Stash the changes (including untracked files)
+      (cd "$submodule" && git stash push --include-untracked -m "workspace-update-backup-$submodule" >/dev/null 2>&1 || true)
       
       # Record this module and branch for restoration
       echo "$submodule:$branch" >> "$STASH_FILE"
