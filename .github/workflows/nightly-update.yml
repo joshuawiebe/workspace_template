@@ -1,9 +1,9 @@
 name: Nightly Submodule Update
 
-# Run every night at 02:00 UTC
+# Run every night at 02:00 Europe/Berlin (approx 01:00 UTC)
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 1 * * *' # 02:00 CET / 01:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -31,15 +31,20 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          cat > ~/.ssh/id_ed25519 <<'SSHKEY'
+          ${{ secrets.SSH_PRIVATE_KEY }}
+          SSHKEY
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
-      # Configure Git identity
-      - name: Configure Git
+      # Configure Git identity and signing
+      - name: Configure Git identity and signing
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.signingkey ~/.ssh/id_ed25519
+          git config --global commit.gpgsign true
+          git config --global gpg.format ssh
 
       # Run nightly update script
       - name: Run update script

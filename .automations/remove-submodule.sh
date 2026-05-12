@@ -139,18 +139,18 @@ info "Preparing to commit changes..."
 read -rp "Enter commit message (default: 'chore: remove $submodule_name submodule'): " commit_msg
 [[ -z "${commit_msg// /}" ]] && commit_msg="chore: remove $submodule_name submodule"
 
-git commit -m "$commit_msg"
+git commit -S -m "$commit_msg"
 success "Changes committed: $commit_msg"
 
 # Ask to push changes
 echo ""
 read -rp "Push changes to origin main? (y/n): " push_changes
 if [[ "$push_changes" =~ ^[Yy]$ ]]; then
-  git push origin main
+  git push origin main || warn "Push failed — changes committed locally"
   success "Changes pushed to origin main!"
 else
   info "Don't forget to push manually:"
-  echo "  git push origin main"
+  echo "  git push origin main || warn "Push failed — changes committed locally""
 fi
 
 success "Done! Submodule '$submodule_name' completely removed."

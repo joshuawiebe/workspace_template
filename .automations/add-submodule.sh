@@ -15,6 +15,7 @@ error() {
   echo -e "\033[0;31m[ERROR]\033[0m $1"
   exit 1
 }
+warn() { echo -e "\033[0;33m[WARN]\033[0m $1" >&2; }
 
 # Prompt for SSH URL
 info "Starting submodule addition process..."
@@ -76,18 +77,18 @@ info "Preparing to commit changes..."
 read -rp "Enter commit message (default: 'chore: add $folder submodule'): " commit_msg
 [[ -z "${commit_msg// /}" ]] && commit_msg="chore: add $folder submodule"
 
-git commit -m "$commit_msg"
+git commit -S -m "$commit_msg"
 success "Changes committed: $commit_msg"
 
 # Ask to push changes
 echo ""
 read -rp "Push changes to origin main? (y/n): " push_changes
 if [[ "$push_changes" =~ ^[Yy]$ ]]; then
-  git push origin main
+  git push origin main || warn "Push failed — changes committed locally"
   success "Changes pushed to origin main!"
 else
   info "Don't forget to push manually:"
-  echo "  git push origin main"
+  echo "  git push origin main || warn "Push failed — changes committed locally""
 fi
 
 success "Done! Submodule '$folder' added."

@@ -83,7 +83,7 @@ git submodule foreach --quiet --recursive '
 ' >> "$ORPHAN_RESULTS"
 
 CHECKED_COUNT=$(git submodule status --recursive | wc -l | tr -d ' ')
-while IFS=':' read -r status submodule branch; do
+  while IFS=':' read -r status submodule branch; do
   case "$status" in
     ORPHANED)
       warn "  Found orphaned commit in: $submodule (resetting to origin/$branch)"
@@ -111,12 +111,12 @@ if [ "$IS_GITHUB_ACTIONS" != "true" ]; then
   
   CHANGED_COUNT=0
   
-git submodule foreach --quiet --recursive '
-  has_changes=$(git status --porcelain | grep -v "^??" | wc -l)
-  if [ "$has_changes" -gt 0 ]; then
-    echo "$name:$has_changes"
-  fi
-' >> "$CHANGE_RESULTS" 2>/dev/null || true
+  git submodule foreach --quiet --recursive '
+    has_changes=$(git status --porcelain | grep -v "^??" | wc -l)
+    if [ "$has_changes" -gt 0 ]; then
+      echo "$name:$has_changes"
+    fi
+  ' >> "$CHANGE_RESULTS" 2>/dev/null || true
   
   if [ -f "$CHANGE_RESULTS" ] && [ -s "$CHANGE_RESULTS" ]; then
     while IFS=':' read -r submodule change_count; do
@@ -193,15 +193,16 @@ if [ -f "$UPDATE_RESULTS" ] && [ -s "$UPDATE_RESULTS" ]; then
       else
         # Local mode: handle feature branches safely
         if [ "$current_branch" != "$branch" ]; then
-          # On a feature branch - switch to default, update, switch back
+          # Switch to default, update
           git checkout "$branch" >/dev/null 2>&1 || true
           git fetch origin "$branch" >/dev/null 2>&1 || true
           git pull origin "$branch" >/dev/null 2>&1 || true
+
           # Check if old branch still exists upstream
           if git fetch origin "$current_branch" >/dev/null 2>&1; then
             git checkout "$current_branch" >/dev/null 2>&1 || true
           else
-            # Branch was deleted upstream — stay on default and drop stash if present
+            # Branch deleted upstream – stay on default and drop stash if present
             if grep -q "^${submodule}:" "$STASH_FILE" 2>/dev/null; then
               git stash drop >/dev/null 2>&1 || true
               sed -i "\|^${submodule}:|d" "$STASH_FILE" 2>/dev/null || true
@@ -337,8 +338,8 @@ if [ -f "$UPDATED_REPOS" ] && [ -s "$UPDATED_REPOS" ]; then
     success "=========================================="
     echo ""
   else
-    git commit -m "$msg"
-    git push origin main
+    git commit -S -m "$msg"
+      git push origin main || warn "Push failed — changes committed locally"
     
     success "=========================================="
     success "  Update Complete!"
@@ -356,8 +357,8 @@ else
       msg="chore: update $(echo "$changed" | tr '\n' ', ' | sed 's/, $//')"
     fi
     
-    git commit -m "$msg"
-    git push origin main
+    git commit -S -m "$msg"
+      git push origin main || warn "Push failed — changes committed locally"
     
     success "=========================================="
     success "  Update Complete!"
