@@ -104,15 +104,20 @@ The GH CLI automatically uses the remote URL format you have configured (SSH or 
 
 ```filetree
 workspace/
-├─ .automations/               # automation scripts
-│  ├─ add-submodule.sh         # add new submodule (auto-sorts everything)
-│  ├─ bootstrap.sh             # clone-time submodule branch checkout
-│  ├─ clean-gitmodules.sh      # clean and sort .gitmodules
-│  ├─ convert-to-ssh.sh        # convert HTTPS remotes to SSH
-│  ├─ generate-tree.sh         # shared tree generation logic
-│  ├─ install.sh               # setup script for new workspaces
-│  ├─ remove-submodule.sh      # remove submodule completely
-│  └─ update.sh                # update all submodules, commit & push
+├─ .automations/             # automation scripts
+│  ├─ add-submodule.sh       # add new submodule (auto-sorts everything)
+│  ├─ bootstrap.sh           # clone-time submodule branch checkout
+│  ├─ convert-to-ssh.sh      # convert HTTPS remotes to SSH
+│  ├─ generate-tree.sh       # shared tree generation logic
+│  ├─ install.sh             # setup script for new workspaces
+│  ├─ remove-submodule.sh    # remove submodule completely
+│  └─ update.sh              # update all submodules, commit & push
+├─ .github/                  # hidden github automation scripts
+│  └─ workflows/             # all workflows for github automations
+│     └─ nightly-update.yml  # automated nightly updates at 02:00 UTC
+├─ .gitignore                # root ignores
+├─ .gitmodules               # defines all submodules (ignore = all)
+└─ README.md                 # this file
 ```
 
 ---
@@ -137,6 +142,11 @@ workspace/
 chmod +x .automations/update.sh
 .automations/update.sh
 ```
+
+`update.sh` is the single entry point: it also sorts `.gitmodules` and regenerates
+the README tree on every run. Useful flags: `--dry-run` (preview only), `--no-push`
+(commit locally), `--ci` (force GitHub Actions mode), `--normalize-only`
+(config + README only), `--help`.
 
 This script intelligently handles updates based on where it runs:
 
@@ -204,18 +214,19 @@ git push origin main
 
 ---
 
-### Cleaning .gitmodules
+### Normalizing .gitmodules
+
+`update.sh` already sorts `.gitmodules` and regenerates the README tree on every
+run, so a separate cleanup script is no longer needed. If you only want to sort
+the config without updating submodules:
 
 ```bash
-chmod +x .automations/clean-gitmodules.sh
-.automations/clean-gitmodules.sh
+chmod +x .automations/update.sh
+.automations/update.sh --normalize-only
 ```
 
-Rebuilds `.gitmodules` with:
-
-* Alphabetical sorting
-* Consistent formatting (tabs, spacing)
-* All required fields (path, url, branch, ignore)
+The config is rebuilt with ASCII/C-locale alphabetical sorting, consistent
+formatting (tabs, spacing), and all required fields (path, url, branch, ignore).
 
 ---
 
@@ -275,11 +286,10 @@ GitHub Actions automatically runs every night at **02:00 UTC** to keep everythin
 
 All scripts use bash with strict error handling (`set -euo pipefail`) for reliability:
 
-* **update.sh** – Dual-mode update engine (local-safe + CI-fast)
+* **update.sh** – Unified normalization + dual-mode update engine (local-safe + CI-fast)
 * **bootstrap.sh** – Clone-time initialization
 * **add-submodule.sh** – Smart submodule addition with sorting
 * **remove-submodule.sh** – Complete submodule removal
-* **clean-gitmodules.sh** – Configuration cleanup and formatting
 * **generate-tree.sh** – Shared tree generation with ASCII sorting
 * **convert-to-ssh.sh** – Convert all HTTPS remotes to SSH
 
