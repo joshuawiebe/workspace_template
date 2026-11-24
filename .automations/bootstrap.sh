@@ -28,7 +28,7 @@ success "Submodules initialized"
 info "Checking out correct branches..."
 echo ""
 
-git submodule foreach '
+git submodule foreach --recursive '
   branch=$(git config -f "$toplevel/.gitmodules" submodule.$name.branch 2>/dev/null || echo "main")
   echo "  → $name (branch: $branch)"
   

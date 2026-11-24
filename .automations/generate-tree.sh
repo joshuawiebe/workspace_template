@@ -16,7 +16,6 @@ generate_readme_tree() {
     [".automations/"]="automation scripts"
     ["add-submodule.sh"]="add new submodule (auto-sorts everything)"
     ["bootstrap.sh"]="clone-time submodule branch checkout"
-    ["clean-gitmodules.sh"]="clean and sort .gitmodules"
     ["convert-to-ssh.sh"]="convert HTTPS remotes to SSH"
     ["generate-tree.sh"]="shared tree generation logic"
     ["install.sh"]="setup script for new workspaces"
@@ -34,7 +33,6 @@ generate_readme_tree() {
   all_entries+=("├─ .automations/")
   all_entries+=("│  ├─ add-submodule.sh")
   all_entries+=("│  ├─ bootstrap.sh")
-  all_entries+=("│  ├─ clean-gitmodules.sh")
   all_entries+=("│  ├─ convert-to-ssh.sh")
   all_entries+=("│  ├─ generate-tree.sh")
   all_entries+=("│  ├─ install.sh")
@@ -89,11 +87,6 @@ generate_readme_tree() {
   local boot_spaces=$((comment_col - ${#boot_entry}))
   local boot_padding=$(printf "%*s" "$boot_spaces")
   echo "${boot_entry}${boot_padding}# ${entries[bootstrap.sh]}"
-  
-  local clean_entry="│  ├─ clean-gitmodules.sh"
-  local clean_spaces=$((comment_col - ${#clean_entry}))
-  local clean_padding=$(printf "%*s" "$clean_spaces")
-  echo "${clean_entry}${clean_padding}# ${entries[clean-gitmodules.sh]}"
   
   local convert_entry="│  ├─ convert-to-ssh.sh"
   local convert_spaces=$((comment_col - ${#convert_entry}))
@@ -355,7 +348,7 @@ update_origin_placeholders() {
 
 customize_readme() {
   local user_email="${1:-your-email@example.com}"
-  local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
+  local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort || true)
 
   update_readme_tree "$names"
   update_clone_url
@@ -367,8 +360,89 @@ customize_readme() {
 }
 
 generate_tree_only() {
-  local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort)
+  local names=$(git config --file .gitmodules --get-regexp path | awk '{print $2}' | LC_ALL=C sort || true)
   update_readme_tree "$names"
+}
+
+# ------------------------------------------------------------------------------
+# Shared submodule helpers
+# ------------------------------------------------------------------------------
+
+# Rebuild .gitmodules with consistent formatting and ASCII (C locale) ordering.
+# Usage: normalize_gitmodules [path-to-gitmodules]
+normalize_gitmodules() {
+  local file="${1:-.gitmodules}"
+  [[ ! -f "$file" ]] && return 0
+
+  local backup tmp name url branch ignore names
+  backup=$(mktemp)
+  cp "$file" "$backup"
+
+  names=$(git config --file "$backup" --get-regexp '^submodule\..*\.path$' 2>/dev/null | awk '{print $2}' | LC_ALL=C sort || true)
+  if [[ -z "$names" ]]; then
+    rm -f "$backup"
+    return 0
+  fi
+
+  tmp=$(mktemp)
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    url=$(git config --file "$backup" "submodule.$name.url" 2>/dev/null || echo "")
+    branch=$(git config --file "$backup" "submodule.$name.branch" 2>/dev/null || echo "main")
+    ignore=$(git config --file "$backup" "submodule.$name.ignore" 2>/dev/null || echo "all")
+
+    if [[ -z "$url" && -d "$name" ]]; then
+      url=$(git -C "$name" config --get remote.origin.url 2>/dev/null || echo "")
+    fi
+
+    {
+      echo "[submodule \"$name\"]"
+      printf '\tpath = %s\n' "$name"
+      printf '\turl = %s\n' "$url"
+      printf '\tbranch = %s\n' "$branch"
+      printf '\tignore = %s\n' "$ignore"
+    } >> "$tmp"
+  done <<< "$names"
+
+  mv "$tmp" "$file"
+  rm -f "$backup"
+}
+
+# Remove cached submodule directories no longer referenced in .gitmodules.
+# The count is exported through ORPHAN_CACHE_REMOVED.
+clean_orphan_cache() {
+  ORPHAN_CACHE_REMOVED=0
+  [[ -d .git/modules ]] || return 0
+
+  local module_dir cached_module gitmodule_path found
+  for module_dir in .git/modules/*/; do
+    [[ -d "$module_dir" ]] || continue
+    cached_module=$(basename "$module_dir")
+
+    found=false
+    while IFS= read -r gitmodule_path; do
+      if [[ "$gitmodule_path" == "$cached_module" ]] || [[ "$gitmodule_path" == "$cached_module"/* ]]; then
+        found=true
+        break
+      fi
+    done < <(git config --file .gitmodules --get-regexp '^submodule\..*\.path$' 2>/dev/null | awk '{print $2}')
+
+    if [[ "$found" == false ]]; then
+      rm -rf "$module_dir"
+      ORPHAN_CACHE_REMOVED=$((ORPHAN_CACHE_REMOVED + 1))
+    fi
+  done
+}
+
+# Create a signed commit, failing loudly (and safely) when signing is unavailable.
+signed_commit() {
+  local msg="$1"
+  if git commit -S -m "$msg"; then
+    return 0
+  fi
+  echo -e "\033[0;31m[ERROR]\033[0m Signed commit failed — check your git signing key/config." >&2
+  echo -e "\033[0;33m[WARN]\033[0m  Retry manually: git -c commit.gpgsign=false commit -m '$msg'" >&2
+  return 1
 }
 
 # Main execution when script is called directly

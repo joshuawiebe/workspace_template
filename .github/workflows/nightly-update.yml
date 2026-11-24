@@ -1,9 +1,9 @@
 name: Nightly Submodule Update
 
-# Run every night at 02:00 Europe/Berlin (approx 01:00 UTC)
+# Run every night at 02:00 UTC
 on:
   schedule:
-    - cron: '0 1 * * *' # 02:00 CET / 01:00 UTC
+    - cron: '0 2 * * *' # 02:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -50,7 +50,7 @@ jobs:
       - name: Run update script
         run: |
           chmod +x .automations/update.sh
-          ./.automations/update.sh
+          ./.automations/update.sh --ci
 
       # Generate summary output
       - name: Summary

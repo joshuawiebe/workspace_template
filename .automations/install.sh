@@ -52,8 +52,8 @@ if [ -s ".gitmodules" ]; then
     git submodule update --init --recursive
     
     # Run bootstrap if it exists
-    if [ -f "bootstrap.sh" ]; then
-        ./bootstrap.sh
+    if [ -f ".automations/bootstrap.sh" ]; then
+        ./.automations/bootstrap.sh
     fi
     echo -e "${GREEN}✓ Submodules initialized${NC}"
 fi
@@ -84,19 +84,16 @@ echo "4. ${BLUE}remove-submodule.sh${NC} - Completely remove a submodule"
 echo "   - Cleans up .gitmodules, git cache, and README.md"
 echo "   - Use when you want to permanently remove a project\n"
 
-echo "5. ${BLUE}clean-gitmodules.sh${NC} - Rebuild and sort .gitmodules alphabetically"
-echo "   - Useful if .gitmodules gets out of order or corrupted\n"
-
 echo -e "${YELLOW}Recommended Workflow:${NC}\n"
 
 echo "1. Add your first submodule:"
-echo -e "   ${BLUE}./add-submodule.sh${NC}\n"
+echo -e "   ${BLUE}./.automations/add-submodule.sh${NC}\n"
 
 echo "2. Bootstrap to ensure proper initialization:"
-echo -e "   ${BLUE}./bootstrap.sh${NC}\n"
+echo -e "   ${BLUE}./.automations/bootstrap.sh${NC}\n"
 
 echo "3. Update all submodules regularly:"
-echo -e "   ${BLUE}./update.sh${NC}\n"
+echo -e "   ${BLUE}./.automations/update.sh${NC}\n"
 
 echo "4. Or manually add a project:"
 echo -e "   ${BLUE}git submodule add --branch main <url> <folder>${NC}\n"
@@ -105,7 +102,8 @@ echo "5. View available commands:"
 echo -e "   ${BLUE}git submodule foreach '<command>'${NC}\n"
 
 echo "6. Create initial commit and push:"
-echo -e "   ${BLUE}git add .${NC}"
+echo -e "   ${BLUE}git add -- .gitmodules README.md${NC}"
+echo -e "   ${BLUE}git add --force -- <submodule-folder>${NC}"
 echo -e "   ${BLUE}git commit -m 'chore: initial setup'${NC}"
 echo -e "   ${BLUE}git remote add origin <your-github-url>${NC}"
 echo -e "   ${BLUE}git push -u origin main${NC}\n"
